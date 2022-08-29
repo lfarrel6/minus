@@ -326,4 +326,13 @@ mod emit_events {
 
         assert_eq!(Command::AddExitCallback(func), pager.rx.try_recv().unwrap());
     }
+
+    #[test]
+    fn add_eof_callback() {
+        let func = Box::new(|upper: usize, rows: usize| println!("EOF @ {upper}, {rows}"));
+        let pager = Pager::new();
+        pager.add_eof_callback(func.clone()).unwrap();
+
+        assert_eq!(Command::AddEofCallback(func), pager.rx.try_recv().unwrap());
+    }
 }

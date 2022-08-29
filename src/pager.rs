@@ -373,6 +373,31 @@ impl Pager {
         self.tx.send(Command::FollowOutput(follow_output))?;
         Ok(())
     }
+
+    /// Adds a function that will be called when the pager hits the end of its input
+    ///
+    ///
+    /// # Errors
+    /// This function will return a [`Err(MinusError::Communication)`](MinusError::Communication) if the data
+    /// could not be sent to the receiver
+    ///
+    /// # Example
+    /// ```
+    /// use minus::Pager;
+    ///
+    /// fn hello(upper_mark: usize, rows: usize) {
+    ///     println!("EOF reached with upper mark at {upper_mark} in terminal of {rows} rows");
+    /// }
+    ///
+    /// let pager = Pager::new();
+    /// pager.add_eof_callback(Box::new(hello)).expect("Failed to send data to the pager");
+    /// ```
+    pub fn add_eof_callback(
+        &self,
+        cb: Box<dyn FnMut(usize, usize) + Send + Sync + 'static>,
+    ) -> Result<(), MinusError> {
+        Ok(self.tx.send(Command::AddEofCallback(cb))?)
+    }
 }
 
 impl Default for Pager {

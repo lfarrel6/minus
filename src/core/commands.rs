@@ -37,6 +37,7 @@ pub enum Command {
     SetExitStrategy(ExitStrategy),
     SetInputClassifier(Box<dyn InputClassifier + Send + Sync + 'static>),
     AddExitCallback(Box<dyn FnMut() + Send + Sync + 'static>),
+    AddEofCallback(Box<dyn FnMut(usize, usize) + Send + Sync + 'static>),
     #[cfg(feature = "static_output")]
     SetRunNoOverflow(bool),
     #[cfg(feature = "search")]
@@ -58,10 +59,11 @@ impl PartialEq for Command {
             (Self::SetLineNumbers(d1), Self::SetLineNumbers(d2)) => d1 == d2,
             (Self::ShowPrompt(d1), Self::ShowPrompt(d2)) => d1 == d2,
             (Self::SetExitStrategy(d1), Self::SetExitStrategy(d2)) => d1 == d2,
+            (Self::SetInputClassifier(_), Self::SetInputClassifier(_))
+            | (Self::AddExitCallback(_), Self::AddExitCallback(_))
+            | (Self::AddEofCallback(_), Self::AddEofCallback(_)) => true,
             #[cfg(feature = "static_output")]
             (Self::SetRunNoOverflow(d1), Self::SetRunNoOverflow(d2)) => d1 == d2,
-            (Self::SetInputClassifier(_), Self::SetInputClassifier(_))
-            | (Self::AddExitCallback(_), Self::AddExitCallback(_)) => true,
             #[cfg(feature = "search")]
             (Self::IncrementalSearchCondition(_), Self::IncrementalSearchCondition(_)) => true,
             _ => false,
@@ -86,6 +88,7 @@ impl Debug for Command {
             #[cfg(feature = "search")]
             Self::IncrementalSearchCondition(_) => write!(f, "IncrementalSearchCondition"),
             Self::AddExitCallback(_) => write!(f, "AddExitCallback"),
+            Self::AddEofCallback(_) => write!(f, "AddEofCallback"),
             #[cfg(feature = "static_output")]
             Self::SetRunNoOverflow(val) => write!(f, "SetRunNoOverflow({val:?})"),
             Self::UserInput(input) => write!(f, "UserInput({input:?})"),

@@ -59,6 +59,15 @@ pub fn handle_event(
 
             display::draw_for_change(out, p, &mut um)?;
             p.upper_mark = um;
+
+            let reached_end_of_pager = lower_mark >= line_count;
+
+            if let Some(callback) = reached_end_of_pager
+                .then(|| p.eof_callback.as_mut())
+                .flatten()
+            {
+                callback(um, line_count)
+            }
         }
         Command::UserInput(InputEvent::UpdateLeftMark(lm)) if !p.screen.line_wrapping => {
             if lm.saturating_add(p.cols) > p.screen.get_max_line_length() && lm > p.left_mark {
@@ -318,6 +327,7 @@ pub fn handle_event(
         Command::IncrementalSearchCondition(cb) => p.search_state.incremental_search_condition = cb,
         Command::SetInputClassifier(clf) => p.input_classifier = clf,
         Command::AddExitCallback(cb) => p.exit_callbacks.push(cb),
+        Command::AddEofCallback(cb) => p.eof_callback = Some(cb),
         Command::ShowPrompt(show) => p.show_prompt = show,
         Command::FollowOutput(follow_output)
         | Command::UserInput(InputEvent::FollowOutput(follow_output)) => {

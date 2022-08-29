@@ -154,6 +154,8 @@ pub struct PagerState {
     /// Value for follow mode.
     /// See [follow_output](crate::pager::Pager::follow_output) for more info on follow mode.
     pub(crate) follow_output: bool,
+    /// Function to be run when the pager scrolls to the end of its input
+    pub(crate) eof_callback: Option<Box<dyn FnMut(usize, usize) + Send + Sync + 'static>>,
 }
 
 impl PagerState {
@@ -210,6 +212,7 @@ impl PagerState {
             prefix_num: String::new(),
             lines_to_row_map: LinesRowMap::new(),
             follow_output: false,
+            eof_callback: None,
         };
 
         state.format_prompt();

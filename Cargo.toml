@@ -34,11 +34,16 @@ static_output = []
 dynamic_output = []
 
 [dev-dependencies]
-tokio = { version = "^1.0", features = ["rt", "macros", "rt-multi-thread", "time"] }
+tokio = { version = "^1.0", features = ["rt", "macros", "rt-multi-thread", "time", "sync"] }
 
 [[example]]
 name = "dyn_tokio"
 path = "examples/dyn_tokio.rs"
+required-features = ["dynamic_output"]
+
+[[example]]
+name = "eof_handler"
+path = "examples/eof_handler.rs"
 required-features = ["dynamic_output"]
 
 [[example]]
