@@ -542,4 +542,69 @@ mod tests {
         .unwrap();
         assert_eq!(ps.exit_callbacks.len(), 1);
     }
+
+    #[test]
+    fn add_eof_callback() {
+        let mut ps = PagerState::new().unwrap();
+        let ev = Command::AddEofCallback(Box::new(|upper_mark: usize, rows: usize| {
+            println!("Reached EOF at {upper_mark} displaying {rows} rows")
+        }));
+        let mut out = Vec::new();
+
+        let mut command_queue = CommandQueue::new_zero();
+
+        handle_event(
+            ev,
+            &mut out,
+            &mut ps,
+            &mut command_queue,
+            &Arc::new(AtomicBool::new(false)),
+            #[cfg(feature = "search")]
+            &UIA,
+        )
+        .unwrap();
+        assert!(ps.eof_callback.is_some());
+    }
+
+    // Test eof callback function
+    #[cfg(feature = "dynamic_output")]
+    #[test]
+    fn eof_callback() {
+        use crate::input::InputEvent;
+        use std::sync::atomic::Ordering;
+        use std::sync::{atomic::AtomicBool, Arc};
+
+        let mut ps = PagerState::new().unwrap();
+        let end_reached = Arc::new(AtomicBool::new(false));
+        let end_reached_within_callback = end_reached.clone();
+        ps.eof_callback = Some(Box::new(move |_: usize, _: usize| {
+            end_reached_within_callback.store(true, Ordering::Relaxed);
+        }));
+        // Terminal size in test is 10 rows, so generated over 1 page of data
+        let mut long_text_feed: Vec<String> = Vec::with_capacity(15);
+        for i in 0..15 {
+            long_text_feed.push(format!("{}", i));
+        }
+        ps.formatted_lines = long_text_feed;
+
+        let eof_mark = ps.formatted_lines.len() - (ps.rows - 1);
+        let ev = Event::UserInput(InputEvent::UpdateUpperMark(eof_mark));
+        #[cfg(feature = "search")]
+        let mut out = Vec::new();
+        #[cfg(feature = "search")]
+        let etr = Arc::new(Mutex::new(()));
+
+        handle_event(
+            ev,
+            #[cfg(feature = "search")]
+            &mut out,
+            &mut ps,
+            &Arc::new(AtomicBool::new(false)),
+            #[cfg(feature = "search")]
+            &etr,
+        )
+        .unwrap();
+
+        assert!(end_reached.load(Ordering::Relaxed));
+    }
 }
